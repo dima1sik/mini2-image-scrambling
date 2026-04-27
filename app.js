@@ -1,49 +1,105 @@
-const imageInput = document.getElementById("imageInput");
-const fileSelectBtn = document.getElementById("fileSelectBtn");
-const fileNameText = document.getElementById("fileNameText");
+const ui = {
+  imageInput: document.getElementById("imageInput"),
+  fileSelectBtn: document.getElementById("fileSelectBtn"),
+  fileNameText: document.getElementById("fileNameText"),
 
-const stageSelect = document.getElementById("stageSelect");
-const seedInput = document.getElementById("seedInput");
-const wrongSeedInput = document.getElementById("wrongSeedInput");
+  stageSelect: document.getElementById("stageSelect"),
+  seedInput: document.getElementById("seedInput"),
+  wrongSeedInput: document.getElementById("wrongSeedInput"),
 
-const scrambleBtn = document.getElementById("scrambleBtn");
-const unscrambleBtn = document.getElementById("unscrambleBtn");
-const wrongUnscrambleBtn = document.getElementById("wrongUnscrambleBtn");
-const saveScrambledBtn = document.getElementById("saveScrambledBtn");
-const saveRestoredBtn = document.getElementById("saveRestoredBtn");
-const saveDifferenceBtn = document.getElementById("saveDifferenceBtn");
+  scrambleBtn: document.getElementById("scrambleBtn"),
+  unscrambleBtn: document.getElementById("unscrambleBtn"),
+  wrongUnscrambleBtn: document.getElementById("wrongUnscrambleBtn"),
+  saveScrambledBtn: document.getElementById("saveScrambledBtn"),
+  saveRestoredBtn: document.getElementById("saveRestoredBtn"),
+  saveDifferenceBtn: document.getElementById("saveDifferenceBtn"),
 
-const statusText = document.getElementById("statusText");
+  statusText: document.getElementById("statusText")
+};
 
-const originalCanvas = document.getElementById("originalCanvas");
-const scrambledCanvas = document.getElementById("scrambledCanvas");
-const restoredCanvas = document.getElementById("restoredCanvas");
-const differenceCanvas = document.getElementById("differenceCanvas");
+const canvases = {
+  original: document.getElementById("originalCanvas"),
+  scrambled: document.getElementById("scrambledCanvas"),
+  restored: document.getElementById("restoredCanvas"),
+  difference: document.getElementById("differenceCanvas")
+};
 
-const originalCtx = originalCanvas.getContext("2d");
-const scrambledCtx = scrambledCanvas.getContext("2d");
-const restoredCtx = restoredCanvas.getContext("2d");
-const differenceCtx = differenceCanvas.getContext("2d");
+const ctx = {
+  original: canvases.original.getContext("2d"),
+  scrambled: canvases.scrambled.getContext("2d"),
+  restored: canvases.restored.getContext("2d"),
+  difference: canvases.difference.getContext("2d")
+};
 
-const originalCorrValue = document.getElementById("originalCorrValue");
-const scrambledCorrValue = document.getElementById("scrambledCorrValue");
-const restoreModeValue = document.getElementById("restoreModeValue");
-const restoredMseValue = document.getElementById("restoredMseValue");
-const exactRestoreValue = document.getElementById("exactRestoreValue");
+const metrics = {
+  originalCorr: document.getElementById("originalCorrValue"),
+  scrambledCorr: document.getElementById("scrambledCorrValue"),
+  restoreMode: document.getElementById("restoreModeValue"),
+  restoredMse: document.getElementById("restoredMseValue"),
+  exactRestore: document.getElementById("exactRestoreValue")
+};
 
 let currentImage = null;
 
-/* =========================
-   PODSTAWOWE FUNKCJE
-   ========================= */
+/* ---------- Basic helpers ---------- */
 
 function setStatus(message) {
-  statusText.textContent = "Status: " + message;
+  ui.statusText.textContent = "Status: " + message;
 }
 
 function parseSeed(value, fallback) {
   const number = parseInt(value, 10);
   return Number.isNaN(number) ? fallback : number;
+}
+
+function getStage() {
+  return ui.stageSelect.value;
+}
+
+function getCorrectSeed() {
+  return parseSeed(ui.seedInput.value, 10);
+}
+
+function getWrongSeed() {
+  return parseSeed(ui.wrongSeedInput.value, 11);
+}
+
+function hasLoadedImage() {
+  if (!currentImage) {
+    setStatus("najpierw wczytaj obraz");
+    return false;
+  }
+  return true;
+}
+
+function fitCanvasToImage(canvas, image) {
+  canvas.width = image.width;
+  canvas.height = image.height;
+}
+
+function clearCanvas(context, canvas) {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function clearAllCanvases() {
+  clearCanvas(ctx.original, canvases.original);
+  clearCanvas(ctx.scrambled, canvases.scrambled);
+  clearCanvas(ctx.restored, canvases.restored);
+  clearCanvas(ctx.difference, canvases.difference);
+}
+
+function clearOutputCanvases() {
+  clearCanvas(ctx.scrambled, canvases.scrambled);
+  clearCanvas(ctx.restored, canvases.restored);
+  clearCanvas(ctx.difference, canvases.difference);
+}
+
+function getImageData(context, canvas) {
+  return context.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function putImageData(context, imageData) {
+  context.putImageData(imageData, 0, 0);
 }
 
 function normalizeShift(shift, size) {
@@ -54,21 +110,8 @@ function normalizeShift(shift, size) {
   return result;
 }
 
-function fitCanvasToImage(canvas, image) {
-  canvas.width = image.width;
-  canvas.height = image.height;
-}
-
-function clearCanvas(ctx, canvas) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function getImageData(ctx, canvas) {
-  return ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-function putImageData(ctx, imageData) {
-  ctx.putImageData(imageData, 0, 0);
+function formatNumber(value) {
+  return value.toFixed(6);
 }
 
 function downloadCanvas(canvas, filename) {
@@ -83,32 +126,20 @@ function downloadCanvas(canvas, filename) {
   link.click();
 }
 
-function clearOutputCanvases() {
-  clearCanvas(scrambledCtx, scrambledCanvas);
-  clearCanvas(restoredCtx, restoredCanvas);
-  clearCanvas(differenceCtx, differenceCanvas);
-}
-
-/* =========================
-   METRYKI
-   ========================= */
-
-function formatNumber(value) {
-  return value.toFixed(6);
-}
+/* ---------- Metrics ---------- */
 
 function resetMetrics() {
-  originalCorrValue.textContent = "-";
-  scrambledCorrValue.textContent = "-";
-  restoreModeValue.textContent = "-";
-  restoredMseValue.textContent = "-";
-  exactRestoreValue.textContent = "-";
+  metrics.originalCorr.textContent = "-";
+  metrics.scrambledCorr.textContent = "-";
+  metrics.restoreMode.textContent = "-";
+  metrics.restoredMse.textContent = "-";
+  metrics.exactRestore.textContent = "-";
 }
 
 function resetRestoreMetrics() {
-  restoreModeValue.textContent = "-";
-  restoredMseValue.textContent = "-";
-  exactRestoreValue.textContent = "-";
+  metrics.restoreMode.textContent = "-";
+  metrics.restoredMse.textContent = "-";
+  metrics.exactRestore.textContent = "-";
 }
 
 function getGrayValue(data, offset) {
@@ -120,7 +151,7 @@ function calculateHorizontalCorrelation(imageData) {
   const height = imageData.height;
   const data = imageData.data;
 
-  if (width < 2 || height < 1) {
+  if (width < 2) {
     return 0;
   }
 
@@ -133,11 +164,8 @@ function calculateHorizontalCorrelation(imageData) {
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width - 1; x++) {
-      const offsetA = (y * width + x) * 4;
-      const offsetB = (y * width + x + 1) * 4;
-
-      const a = getGrayValue(data, offsetA);
-      const b = getGrayValue(data, offsetB);
+      const a = getGrayValue(data, (y * width + x) * 4);
+      const b = getGrayValue(data, (y * width + x + 1) * 4);
 
       n++;
       sumX += a;
@@ -149,20 +177,16 @@ function calculateHorizontalCorrelation(imageData) {
   }
 
   const numerator = n * sumXY - sumX * sumY;
-  const denominatorPartA = n * sumXX - sumX * sumX;
-  const denominatorPartB = n * sumYY - sumY * sumY;
-  const denominator = Math.sqrt(denominatorPartA * denominatorPartB);
+  const denominator = Math.sqrt(
+    (n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY)
+  );
 
-  if (denominator === 0) {
-    return 0;
-  }
-
-  return numerator / denominator;
+  return denominator === 0 ? 0 : numerator / denominator;
 }
 
-function calculateMSE(imageDataA, imageDataB) {
-  const dataA = imageDataA.data;
-  const dataB = imageDataB.data;
+function calculateMSE(imageA, imageB) {
+  const dataA = imageA.data;
+  const dataB = imageB.data;
 
   if (dataA.length !== dataB.length) {
     return null;
@@ -183,9 +207,9 @@ function calculateMSE(imageDataA, imageDataB) {
   return sum / count;
 }
 
-function areImagesExactlyEqual(imageDataA, imageDataB) {
-  const dataA = imageDataA.data;
-  const dataB = imageDataB.data;
+function areImagesExactlyEqual(imageA, imageB) {
+  const dataA = imageA.data;
+  const dataB = imageB.data;
 
   if (dataA.length !== dataB.length) {
     return false;
@@ -200,11 +224,11 @@ function areImagesExactlyEqual(imageDataA, imageDataB) {
   return true;
 }
 
-function buildDifferenceImage(imageDataA, imageDataB) {
-  const width = imageDataA.width;
-  const height = imageDataA.height;
-  const dataA = imageDataA.data;
-  const dataB = imageDataB.data;
+function buildDifferenceImage(imageA, imageB) {
+  const width = imageA.width;
+  const height = imageA.height;
+  const dataA = imageA.data;
+  const dataB = imageB.data;
   const result = new Uint8ClampedArray(dataA.length);
 
   for (let i = 0; i < dataA.length; i += 4) {
@@ -218,130 +242,53 @@ function buildDifferenceImage(imageDataA, imageDataB) {
 }
 
 function updateOriginalMetric() {
-  const imageData = getImageData(originalCtx, originalCanvas);
-  originalCorrValue.textContent = formatNumber(calculateHorizontalCorrelation(imageData));
+  const image = getImageData(ctx.original, canvases.original);
+  metrics.originalCorr.textContent = formatNumber(calculateHorizontalCorrelation(image));
 }
 
-function updateScrambledMetric(scrambledImageData) {
-  scrambledCorrValue.textContent = formatNumber(calculateHorizontalCorrelation(scrambledImageData));
+function updateScrambledMetric(image) {
+  metrics.scrambledCorr.textContent = formatNumber(calculateHorizontalCorrelation(image));
 }
 
-function updateRestoreMetrics(restoredImageData, modeText) {
-  const originalImageData = getImageData(originalCtx, originalCanvas);
-  const mse = calculateMSE(originalImageData, restoredImageData);
-  const exact = areImagesExactlyEqual(originalImageData, restoredImageData);
-  const differenceImage = buildDifferenceImage(originalImageData, restoredImageData);
+function updateRestoreMetrics(restoredImage, modeText) {
+  const originalImage = getImageData(ctx.original, canvases.original);
+  const mse = calculateMSE(originalImage, restoredImage);
+  const exact = areImagesExactlyEqual(originalImage, restoredImage);
+  const differenceImage = buildDifferenceImage(originalImage, restoredImage);
 
-  restoreModeValue.textContent = modeText;
-  restoredMseValue.textContent = mse === null ? "-" : formatNumber(mse);
-  exactRestoreValue.textContent = exact ? "TAK" : "NIE";
+  metrics.restoreMode.textContent = modeText;
+  metrics.restoredMse.textContent = mse === null ? "-" : formatNumber(mse);
+  metrics.exactRestore.textContent = exact ? "TAK" : "NIE";
 
-  clearCanvas(differenceCtx, differenceCanvas);
-  putImageData(differenceCtx, differenceImage);
+  clearCanvas(ctx.difference, canvases.difference);
+  putImageData(ctx.difference, differenceImage);
 }
 
-/* =========================
-   ETAP 1
-   ========================= */
+/* ---------- Shared transforms ---------- */
 
-function createRowShifts(seed, width, height) {
-  const shifts = [];
-
-  for (let y = 0; y < height; y++) {
-    const rawShift = seed * (y + 3) + y * y * 17 + 31;
-    shifts.push(normalizeShift(rawShift, width));
-  }
-
-  return shifts;
-}
-
-function createColumnShifts(seed, width, height) {
-  const shifts = [];
-
-  for (let x = 0; x < width; x++) {
-    const rawShift = seed * (x + 5) + x * x * 19 + 47;
-    shifts.push(normalizeShift(rawShift, height));
-  }
-
-  return shifts;
-}
-
-function shiftRowsByArray(imageData, rowShifts) {
+function shiftRows(imageData, shifts) {
   const width = imageData.width;
   const height = imageData.height;
   const source = imageData.data;
   const result = new Uint8ClampedArray(source.length);
 
   for (let y = 0; y < height; y++) {
-    const shift = normalizeShift(rowShifts[y], width);
+    const shift = normalizeShift(shifts[y], width);
 
     for (let x = 0; x < width; x++) {
-      const oldIndex = (y * width + x) * 4;
+      const oldOffset = (y * width + x) * 4;
       const newX = (x + shift) % width;
-      const newIndex = (y * width + newX) * 4;
+      const newOffset = (y * width + newX) * 4;
 
-      result[newIndex] = source[oldIndex];
-      result[newIndex + 1] = source[oldIndex + 1];
-      result[newIndex + 2] = source[oldIndex + 2];
-      result[newIndex + 3] = source[oldIndex + 3];
+      result[newOffset] = source[oldOffset];
+      result[newOffset + 1] = source[oldOffset + 1];
+      result[newOffset + 2] = source[oldOffset + 2];
+      result[newOffset + 3] = source[oldOffset + 3];
     }
   }
 
   return new ImageData(result, width, height);
 }
-
-function shiftColumnsByArray(imageData, columnShifts) {
-  const width = imageData.width;
-  const height = imageData.height;
-  const source = imageData.data;
-  const result = new Uint8ClampedArray(source.length);
-
-  for (let x = 0; x < width; x++) {
-    const shift = normalizeShift(columnShifts[x], height);
-
-    for (let y = 0; y < height; y++) {
-      const oldIndex = (y * width + x) * 4;
-      const newY = (y + shift) % height;
-      const newIndex = (newY * width + x) * 4;
-
-      result[newIndex] = source[oldIndex];
-      result[newIndex + 1] = source[oldIndex + 1];
-      result[newIndex + 2] = source[oldIndex + 2];
-      result[newIndex + 3] = source[oldIndex + 3];
-    }
-  }
-
-  return new ImageData(result, width, height);
-}
-
-function scrambleStage1(imageData, seed) {
-  const width = imageData.width;
-  const height = imageData.height;
-
-  const rowShifts = createRowShifts(seed, width, height);
-  const columnShifts = createColumnShifts(seed * 2 + 5, width, height);
-
-  const afterRows = shiftRowsByArray(imageData, rowShifts);
-  return shiftColumnsByArray(afterRows, columnShifts);
-}
-
-function unscrambleStage1(imageData, seed) {
-  const width = imageData.width;
-  const height = imageData.height;
-
-  const rowShifts = createRowShifts(seed, width, height);
-  const columnShifts = createColumnShifts(seed * 2 + 5, width, height);
-
-  const inverseRows = rowShifts.map((value) => -value);
-  const inverseColumns = columnShifts.map((value) => -value);
-
-  const afterColumns = shiftColumnsByArray(imageData, inverseColumns);
-  return shiftRowsByArray(afterColumns, inverseRows);
-}
-
-/* =========================
-   ETAP 2
-   ========================= */
 
 function createPRNG(seed) {
   let state = seed >>> 0;
@@ -406,6 +353,78 @@ function permutePixels(imageData, permutation) {
   return new ImageData(result, width, height);
 }
 
+function buildKeystream(length, seed) {
+  const stream = new Uint8Array(length);
+  const random = createPRNG(seed);
+
+  for (let i = 0; i < length; i++) {
+    stream[i] = Math.floor(random() * 256);
+  }
+
+  return stream;
+}
+
+function substitutePixels(imageData, seed, inverse) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const source = imageData.data;
+  const result = new Uint8ClampedArray(source.length);
+  const stream = buildKeystream(width * height * 3, seed);
+
+  let streamIndex = 0;
+
+  for (let i = 0; i < source.length; i += 4) {
+    const r = stream[streamIndex++];
+    const g = stream[streamIndex++];
+    const b = stream[streamIndex++];
+
+    if (inverse) {
+      result[i] = (source[i] - r + 256) % 256;
+      result[i + 1] = (source[i + 1] - g + 256) % 256;
+      result[i + 2] = (source[i + 2] - b + 256) % 256;
+    } else {
+      result[i] = (source[i] + r) % 256;
+      result[i + 1] = (source[i + 1] + g) % 256;
+      result[i + 2] = (source[i + 2] + b) % 256;
+    }
+
+    result[i + 3] = source[i + 3];
+  }
+
+  return new ImageData(result, width, height);
+}
+
+/* ---------- Stage 1: weak ---------- */
+
+function createStage1RowShifts(seed, width, height) {
+  const shifts = [];
+  const bandSize = 18;
+  const maxShift = Math.max(6, Math.floor(width * 0.05));
+
+  for (let y = 0; y < height; y++) {
+    const band = Math.floor(y / bandSize);
+    const direction = band % 2 === 0 ? 1 : -1;
+    const shift = ((seed + band * 4) % (maxShift + 1)) * direction;
+    shifts.push(shift);
+  }
+
+  return shifts;
+}
+
+function scrambleStage1(imageData, seed) {
+  const shifts = createStage1RowShifts(seed, imageData.width, imageData.height);
+  return shiftRows(imageData, shifts);
+}
+
+function unscrambleStage1(imageData, seed) {
+  const shifts = createStage1RowShifts(seed, imageData.width, imageData.height)
+    .map((value) => -value);
+
+  return shiftRows(imageData, shifts);
+}
+
+/* ---------- Stage 2: pure pixel permutation ---------- */
+
 function scrambleStage2(imageData, seed) {
   const pixelCount = imageData.width * imageData.height;
   const permutation = buildPermutation(pixelCount, seed);
@@ -419,226 +438,160 @@ function unscrambleStage2(imageData, seed) {
   return permutePixels(imageData, inversePermutation);
 }
 
-/* =========================
-   ETAP 3
-   ========================= */
-
-function buildKeystream(length, seed) {
-  const stream = new Uint8Array(length);
-  const random = createPRNG(seed);
-
-  for (let i = 0; i < length; i++) {
-    stream[i] = Math.floor(random() * 256);
-  }
-
-  return stream;
-}
-
-function substitutePixels(imageData, seed) {
-  const width = imageData.width;
-  const height = imageData.height;
-  const source = imageData.data;
-  const result = new Uint8ClampedArray(source.length);
-
-  const stream = buildKeystream(width * height * 3, seed);
-  let streamIndex = 0;
-
-  for (let i = 0; i < source.length; i += 4) {
-    result[i] = (source[i] + stream[streamIndex++]) % 256;
-    result[i + 1] = (source[i + 1] + stream[streamIndex++]) % 256;
-    result[i + 2] = (source[i + 2] + stream[streamIndex++]) % 256;
-    result[i + 3] = source[i + 3];
-  }
-
-  return new ImageData(result, width, height);
-}
-
-function inverseSubstitutePixels(imageData, seed) {
-  const width = imageData.width;
-  const height = imageData.height;
-  const source = imageData.data;
-  const result = new Uint8ClampedArray(source.length);
-
-  const stream = buildKeystream(width * height * 3, seed);
-  let streamIndex = 0;
-
-  for (let i = 0; i < source.length; i += 4) {
-    result[i] = (source[i] - stream[streamIndex++] + 256) % 256;
-    result[i + 1] = (source[i + 1] - stream[streamIndex++] + 256) % 256;
-    result[i + 2] = (source[i + 2] - stream[streamIndex++] + 256) % 256;
-    result[i + 3] = source[i + 3];
-  }
-
-  return new ImageData(result, width, height);
-}
+/* ---------- Stage 3: permutation + substitution ---------- */
 
 function scrambleStage3(imageData, seed) {
-  const permuted = scrambleStage2(imageData, seed);
-  return substitutePixels(permuted, seed * 3 + 17);
+  const pixelCount = imageData.width * imageData.height;
+  const permutation = buildPermutation(pixelCount, seed);
+  const permuted = permutePixels(imageData, permutation);
+  return substitutePixels(permuted, seed * 3 + 17, false);
 }
 
 function unscrambleStage3(imageData, seed) {
-  const withoutSubstitution = inverseSubstitutePixels(imageData, seed * 3 + 17);
-  return unscrambleStage2(withoutSubstitution, seed);
+  const withoutColors = substitutePixels(imageData, seed * 3 + 17, true);
+  const pixelCount = imageData.width * imageData.height;
+  const permutation = buildPermutation(pixelCount, seed);
+  const inversePermutation = invertPermutation(permutation);
+  return permutePixels(withoutColors, inversePermutation);
 }
 
-/* =========================
-   WYBÓR ETAPU
-   ========================= */
+/* ---------- Stage selector ---------- */
+
+const scrambleMap = {
+  "1": scrambleStage1,
+  "2": scrambleStage2,
+  "3": scrambleStage3
+};
+
+const unscrambleMap = {
+  "1": unscrambleStage1,
+  "2": unscrambleStage2,
+  "3": unscrambleStage3
+};
 
 function scrambleByStage(imageData, stage, seed) {
-  switch (stage) {
-    case "1":
-      return scrambleStage1(imageData, seed);
-    case "2":
-      return scrambleStage2(imageData, seed);
-    case "3":
-      return scrambleStage3(imageData, seed);
-    default:
-      return imageData;
-  }
+  return scrambleMap[stage](imageData, seed);
 }
 
 function unscrambleByStage(imageData, stage, seed) {
-  switch (stage) {
-    case "1":
-      return unscrambleStage1(imageData, seed);
-    case "2":
-      return unscrambleStage2(imageData, seed);
-    case "3":
-      return unscrambleStage3(imageData, seed);
-    default:
-      return imageData;
-  }
+  return unscrambleMap[stage](imageData, seed);
 }
 
-/* =========================
-   OBSŁUGA PLIKU
-   ========================= */
+/* ---------- File loading ---------- */
 
-fileSelectBtn.addEventListener("click", function () {
-  imageInput.click();
-});
+function handleLoadedImage(image) {
+  currentImage = image;
 
-imageInput.addEventListener("change", function (event) {
+  Object.values(canvases).forEach((canvas) => fitCanvasToImage(canvas, image));
+
+  clearAllCanvases();
+  ctx.original.drawImage(image, 0, 0);
+
+  resetMetrics();
+  updateOriginalMetric();
+  setStatus("obraz zostal wczytany");
+}
+
+function loadImageFromFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const image = new Image();
+
+    image.onload = function () {
+      handleLoadedImage(image);
+    };
+
+    image.src = event.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function handleFileChange(event) {
   const file = event.target.files[0];
 
   if (!file) {
-    fileNameText.textContent = "Nie wybrano pliku";
+    ui.fileNameText.textContent = "Nie wybrano pliku";
     setStatus("nie wybrano obrazu");
     return;
   }
 
-  fileNameText.textContent = file.name;
+  ui.fileNameText.textContent = file.name;
+  loadImageFromFile(file);
+}
 
-  const reader = new FileReader();
+/* ---------- Main actions ---------- */
 
-  reader.onload = function (loadEvent) {
-    const img = new Image();
-
-    img.onload = function () {
-      currentImage = img;
-
-      fitCanvasToImage(originalCanvas, img);
-      fitCanvasToImage(scrambledCanvas, img);
-      fitCanvasToImage(restoredCanvas, img);
-      fitCanvasToImage(differenceCanvas, img);
-
-      clearCanvas(originalCtx, originalCanvas);
-      clearCanvas(scrambledCtx, scrambledCanvas);
-      clearCanvas(restoredCtx, restoredCanvas);
-      clearCanvas(differenceCtx, differenceCanvas);
-
-      originalCtx.drawImage(img, 0, 0);
-
-      resetMetrics();
-      updateOriginalMetric();
-
-      setStatus("obraz został wczytany");
-    };
-
-    img.src = loadEvent.target.result;
-  };
-
-  reader.readAsDataURL(file);
-});
-
-/* =========================
-   PRZYCISKI
-   ========================= */
-
-scrambleBtn.addEventListener("click", function () {
-  if (!currentImage) {
-    setStatus("najpierw wczytaj obraz");
+function handleScramble() {
+  if (!hasLoadedImage()) {
     return;
   }
 
-  const stage = stageSelect.value;
-  const seed = parseSeed(seedInput.value, 10);
-  const originalImage = getImageData(originalCtx, originalCanvas);
+  const stage = getStage();
+  const seed = getCorrectSeed();
+  const originalImage = getImageData(ctx.original, canvases.original);
   const scrambledImage = scrambleByStage(originalImage, stage, seed);
 
-  clearCanvas(scrambledCtx, scrambledCanvas);
-  putImageData(scrambledCtx, scrambledImage);
+  clearCanvas(ctx.scrambled, canvases.scrambled);
+  putImageData(ctx.scrambled, scrambledImage);
 
-  clearCanvas(restoredCtx, restoredCanvas);
-  clearCanvas(differenceCtx, differenceCanvas);
+  clearCanvas(ctx.restored, canvases.restored);
+  clearCanvas(ctx.difference, canvases.difference);
   resetRestoreMetrics();
 
   updateScrambledMetric(scrambledImage);
   setStatus("wykonano Scramble dla etapu " + stage);
-});
+}
 
-unscrambleBtn.addEventListener("click", function () {
-  if (!currentImage) {
-    setStatus("najpierw wczytaj obraz");
+function handleUnscramble(seed, modeText, statusSuffix) {
+  if (!hasLoadedImage()) {
     return;
   }
 
-  const stage = stageSelect.value;
-  const seed = parseSeed(seedInput.value, 10);
-  const scrambledImage = getImageData(scrambledCtx, scrambledCanvas);
+  const stage = getStage();
+  const scrambledImage = getImageData(ctx.scrambled, canvases.scrambled);
   const restoredImage = unscrambleByStage(scrambledImage, stage, seed);
 
-  clearCanvas(restoredCtx, restoredCanvas);
-  putImageData(restoredCtx, restoredImage);
+  clearCanvas(ctx.restored, canvases.restored);
+  putImageData(ctx.restored, restoredImage);
 
-  updateRestoreMetrics(restoredImage, "poprawny klucz");
-  setStatus("wykonano Unscramble dla etapu " + stage + " przy poprawnym kluczu");
+  updateRestoreMetrics(restoredImage, modeText);
+  setStatus("wykonano Unscramble dla etapu " + stage + " " + statusSuffix);
+}
+
+function saveCanvasWithStage(canvas, filenamePrefix, successMessage) {
+  const stage = getStage();
+  downloadCanvas(canvas, filenamePrefix + stage + ".png");
+  setStatus(successMessage);
+}
+
+/* ---------- Events ---------- */
+
+ui.fileSelectBtn.addEventListener("click", function () {
+  ui.imageInput.click();
 });
 
-wrongUnscrambleBtn.addEventListener("click", function () {
-  if (!currentImage) {
-    setStatus("najpierw wczytaj obraz");
-    return;
-  }
+ui.imageInput.addEventListener("change", handleFileChange);
 
-  const stage = stageSelect.value;
-  const wrongSeed = parseSeed(wrongSeedInput.value, 11);
-  const scrambledImage = getImageData(scrambledCtx, scrambledCanvas);
-  const restoredImage = unscrambleByStage(scrambledImage, stage, wrongSeed);
+ui.scrambleBtn.addEventListener("click", handleScramble);
 
-  clearCanvas(restoredCtx, restoredCanvas);
-  putImageData(restoredCtx, restoredImage);
-
-  updateRestoreMetrics(restoredImage, "błędny klucz");
-  setStatus("wykonano Unscramble dla etapu " + stage + " przy błędnym kluczu");
+ui.unscrambleBtn.addEventListener("click", function () {
+  handleUnscramble(getCorrectSeed(), "poprawny klucz", "przy poprawnym kluczu");
 });
 
-saveScrambledBtn.addEventListener("click", function () {
-  const stage = stageSelect.value;
-  downloadCanvas(scrambledCanvas, "scrambled_stage_" + stage + ".png");
-  setStatus("zapisano obraz scrambled");
+ui.wrongUnscrambleBtn.addEventListener("click", function () {
+  handleUnscramble(getWrongSeed(), "bledny klucz", "przy blednym kluczu");
 });
 
-saveRestoredBtn.addEventListener("click", function () {
-  const stage = stageSelect.value;
-  downloadCanvas(restoredCanvas, "restored_stage_" + stage + ".png");
-  setStatus("zapisano obraz restored");
+ui.saveScrambledBtn.addEventListener("click", function () {
+  saveCanvasWithStage(canvases.scrambled, "scrambled_stage_", "zapisano obraz scrambled");
 });
 
-saveDifferenceBtn.addEventListener("click", function () {
-  const stage = stageSelect.value;
-  downloadCanvas(differenceCanvas, "difference_stage_" + stage + ".png");
-  setStatus("zapisano obraz difference");
+ui.saveRestoredBtn.addEventListener("click", function () {
+  saveCanvasWithStage(canvases.restored, "restored_stage_", "zapisano obraz restored");
+});
+
+ui.saveDifferenceBtn.addEventListener("click", function () {
+  saveCanvasWithStage(canvases.difference, "difference_stage_", "zapisano obraz difference");
 });
