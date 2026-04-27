@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini 2 - Image Scrambling</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Mini 2 - Image Scrambling</h1>
+
+    <div class="controls">
+      <div class="control-block">
+        <label for="imageInput">Wczytaj obraz:</label>
+        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp">
+      </div>
+
+      <div class="control-block">
+        <label for="stageSelect">Etap:</label>
+        <select id="stageSelect">
+          <option value="1">Etap 1 - Naiwny scrambling</option>
+          <option value="2">Etap 2 - Czysta permutacja</option>
+          <option value="3">Etap 3 - Wersja wzmocniona</option>
+        </select>
+      </div>
+
+      <div class="control-block">
+        <label for="seedInput">Klucz / seed:</label>
+        <input type="text" id="seedInput" value="12345">
+      </div>
+
+      <div class="control-block buttons-block">
+        <button id="scrambleBtn">Scramble</button>
+        <button id="unscrambleBtn">Unscramble</button>
+      </div>
+    </div>
+
+    <div class="images">
+      <div class="panel">
+        <h2>Obraz oryginalny</h2>
+        <canvas id="originalCanvas"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Obraz scrambled</h2>
+        <canvas id="scrambledCanvas"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Obraz restored</h2>
+        <canvas id="restoredCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="status">
+      <p id="statusText">Status: oczekiwanie na wczytanie obrazu</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
