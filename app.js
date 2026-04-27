@@ -40,17 +40,39 @@ function normalizeShift(shift, size) {
   return result;
 }
 
-function shiftRows(imageData, shift) {
+function createRowShifts(seed, width, height) {
+  const shifts = [];
+
+  for (let y = 0; y < height; y++) {
+    const shift = normalizeShift(seed + y * 7, width);
+    shifts.push(shift);
+  }
+
+  return shifts;
+}
+
+function createColumnShifts(seed, width, height) {
+  const shifts = [];
+
+  for (let x = 0; x < width; x++) {
+    const shift = normalizeShift(seed + x * 11, height);
+    shifts.push(shift);
+  }
+
+  return shifts;
+}
+
+function shiftRowsByArray(imageData, rowShifts) {
   const width = imageData.width;
   const height = imageData.height;
   const data = imageData.data;
   const result = new Uint8ClampedArray(data.length);
 
-  const normalizedShift = normalizeShift(shift, width);
-
   for (let y = 0; y < height; y++) {
+    const shift = normalizeShift(rowShifts[y], width);
+
     for (let x = 0; x < width; x++) {
-      const newX = (x + normalizedShift) % width;
+      const newX = (x + shift) % width;
 
       const oldIndex = (y * width + x) * 4;
       const newIndex = (y * width + newX) * 4;
@@ -65,17 +87,17 @@ function shiftRows(imageData, shift) {
   return new ImageData(result, width, height);
 }
 
-function shiftColumns(imageData, shift) {
+function shiftColumnsByArray(imageData, columnShifts) {
   const width = imageData.width;
   const height = imageData.height;
   const data = imageData.data;
   const result = new Uint8ClampedArray(data.length);
 
-  const normalizedShift = normalizeShift(shift, height);
+  for (let x = 0; x < width; x++) {
+    const shift = normalizeShift(columnShifts[x], height);
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const newY = (y + normalizedShift) % height;
+    for (let y = 0; y < height; y++) {
+      const newY = (y + shift) % height;
 
       const oldIndex = (y * width + x) * 4;
       const newIndex = (newY * width + x) * 4;
@@ -90,30 +112,31 @@ function shiftColumns(imageData, shift) {
   return new ImageData(result, width, height);
 }
 
-function getStage1Shifts(seed, width, height) {
-  const rowShift = normalizeShift(seed, width);
-  const colShift = normalizeShift(Math.floor(seed / 2) + 7, height);
-
-  return {
-    rowShift: rowShift,
-    colShift: colShift
-  };
-}
-
 function scrambleStage1(imageData, seed) {
-  const shifts = getStage1Shifts(seed, imageData.width, imageData.height);
+  const width = imageData.width;
+  const height = imageData.height;
 
-  const rowsShifted = shiftRows(imageData, shifts.rowShift);
-  const fullyShifted = shiftColumns(rowsShifted, shifts.colShift);
+  const rowShifts = createRowShifts(seed, width, height);
+  const columnShifts = createColumnShifts(seed * 2 + 5, width, height);
+
+  const rowsShifted = shiftRowsByArray(imageData, rowShifts);
+  const fullyShifted = shiftColumnsByArray(rowsShifted, columnShifts);
 
   return fullyShifted;
 }
 
 function unscrambleStage1(imageData, seed) {
-  const shifts = getStage1Shifts(seed, imageData.width, imageData.height);
+  const width = imageData.width;
+  const height = imageData.height;
 
-  const columnsRestored = shiftColumns(imageData, -shifts.colShift);
-  const fullyRestored = shiftRows(columnsRestored, -shifts.rowShift);
+  const rowShifts = createRowShifts(seed, width, height);
+  const columnShifts = createColumnShifts(seed * 2 + 5, width, height);
+
+  const inverseColumnShifts = columnShifts.map((value) => -value);
+  const inverseRowShifts = rowShifts.map((value) => -value);
+
+  const columnsRestored = shiftColumnsByArray(imageData, inverseColumnShifts);
+  const fullyRestored = shiftRowsByArray(columnsRestored, inverseRowShifts);
 
   return fullyRestored;
 }
