@@ -9,13 +9,11 @@
 <body>
   <div class="container">
     <header class="hero">
-      <div class="hero-left">
-        <div class="hero-badge">Mini Projekt 2</div>
-        <h1>Image Scrambling Analyzer</h1>
-        <p class="hero-text">
-          Analiza etapów scramblingu, permutacji i wersji wzmocnionej dla obrazu cyfrowego.
-        </p>
-      </div>
+      <div class="hero-badge">Mini Projekt 2</div>
+      <h1>Image Scrambling Analyzer</h1>
+      <p class="hero-text">
+        Aplikacja do analizy trzech etapów scramblingu i unscramblingu obrazu cyfrowego.
+      </p>
     </header>
 
     <section class="toolbar">
@@ -24,7 +22,11 @@
 
         <div class="field">
           <label for="imageInput">Wczytaj obraz</label>
-          <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp" />
+          <div class="custom-file-upload">
+            <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp" />
+            <button type="button" id="fileSelectBtn">Wybierz plik</button>
+            <span id="fileNameText">Nie wybrano pliku</span>
+          </div>
         </div>
 
         <div class="field">
@@ -58,8 +60,8 @@
           <button id="scrambleBtn">Scramble</button>
           <button id="unscrambleBtn">Unscramble</button>
           <button id="wrongUnscrambleBtn">Unscramble (błędny klucz)</button>
-          <button id="saveScrambledBtn">Zapisz scrambled</button>
-          <button id="saveRestoredBtn">Zapisz restored</button>
+          <button id="saveScrambledBtn">Zapisz obraz scrambled</button>
+          <button id="saveRestoredBtn">Zapisz obraz restored</button>
           <button id="saveDifferenceBtn">Zapisz difference</button>
         </div>
       </div>
@@ -82,7 +84,7 @@
       </article>
 
       <article class="canvas-card">
-        <div class="card-title">Difference</div>
+        <div class="card-title">Obraz różnicowy</div>
         <canvas id="differenceCanvas"></canvas>
       </article>
     </section>

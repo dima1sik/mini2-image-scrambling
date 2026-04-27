@@ -1,4 +1,7 @@
 const imageInput = document.getElementById("imageInput");
+const fileSelectBtn = document.getElementById("fileSelectBtn");
+const fileNameText = document.getElementById("fileNameText");
+
 const stageSelect = document.getElementById("stageSelect");
 const seedInput = document.getElementById("seedInput");
 const wrongSeedInput = document.getElementById("wrongSeedInput");
@@ -202,10 +205,6 @@ function updateRestoreMetrics(restoredImageData, modeText) {
   putImageData(differenceCtx, differenceImage);
 }
 
-/* =========================
-   ETAP 1
-   ========================= */
-
 function createRowShifts(seed, width, height) {
   const shifts = [];
 
@@ -307,10 +306,6 @@ function unscrambleStage1(imageData, seed) {
   return fullyRestored;
 }
 
-/* =========================
-   ETAP 2
-   ========================= */
-
 function createPRNG(seed) {
   let state = seed >>> 0;
 
@@ -390,10 +385,6 @@ function unscrambleStage2(imageData, seed) {
   return permutePixels(imageData, inversePermutation);
 }
 
-/* =========================
-   ETAP 3
-   ========================= */
-
 function buildKeystream(length, seed) {
   const stream = new Uint8Array(length);
   const random = createPRNG(seed);
@@ -455,10 +446,6 @@ function unscrambleStage3(imageData, seed) {
   return restored;
 }
 
-/* =========================
-   WSPÓLNE
-   ========================= */
-
 function scrambleByStage(imageData, stage, seed) {
   if (stage === "1") {
     return scrambleStage1(imageData, seed);
@@ -503,17 +490,20 @@ function downloadCanvas(canvas, filename) {
   link.click();
 }
 
-/* =========================
-   ZDARZENIA
-   ========================= */
+fileSelectBtn.addEventListener("click", function () {
+  imageInput.click();
+});
 
 imageInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
 
   if (!file) {
+    fileNameText.textContent = "Nie wybrano pliku";
     setStatus("nie wybrano obrazu");
     return;
   }
+
+  fileNameText.textContent = file.name;
 
   const reader = new FileReader();
 
