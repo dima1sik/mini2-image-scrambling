@@ -3,36 +3,36 @@
 }
 
 :root {
-  --bg: #0d262c;
-  --bg-soft: #11343b;
-  --bg-deep: #091b20;
+  --bg: #e7e7e7;
+  --bg-soft: #efefef;
+  --bg-deep: #dddddd;
 
-  --card: #173c44;
-  --card-2: #1d4650;
-  --border: #4c7b80;
+  --card: #f5f3f3;
+  --card-2: #ece8e8;
+  --border: #c9b3b7;
 
-  --text: #eef4ef;
-  --muted: #c3d5d1;
+  --text: #2a2a2a;
+  --muted: #5b5b5b;
 
-  --accent-dark: #08181c;
-  --accent-main: #2f666b;
-  --accent-soft: #6d9b97;
-  --accent-light: #9fb9b0;
-  --accent-cream: #e4dfcf;
+  --accent-main: #9b1b30;
+  --accent-dark: #7f1628;
+  --accent-soft: #c9b3b7;
+  --accent-light: #ede3e5;
+  --accent-cream: #ffffff;
 
-  --primary: #6d9b97;
-  --primary-hover: #5d8883;
+  --primary: #9b1b30;
+  --primary-hover: #7f1628;
 
-  --secondary: #86afaa;
-  --secondary-hover: #739c97;
+  --secondary: #b03a4d;
+  --secondary-hover: #982f42;
 
-  --success: #e4dfcf;
+  --success: #6b1d2b;
 
-  --canvas-bg: #7fa3a1;
-  --canvas-bg-2: #93b4b2;
-  --canvas-border: #b9d0cc;
+  --canvas-bg: #ece7e7;
+  --canvas-bg-2: #e2dbdb;
+  --canvas-border: #cfb8bc;
 
-  --shadow: 0 10px 26px rgba(0, 0, 0, 0.30);
+  --shadow: 0 10px 26px rgba(90, 20, 35, 0.10);
 }
 
 body {
@@ -50,13 +50,26 @@ body {
 }
 
 .hero {
-  background: linear-gradient(135deg, #14363d 0%, #21545b 45%, #4b767a 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #f4f1f1 0%, #ece7e7 100%);
+  color: var(--text);
   border-radius: 22px;
   padding: 28px;
   margin-bottom: 24px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(228, 223, 207, 0.14);
+  border: 2px solid var(--accent-soft);
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12px;
+  background: var(--accent-main);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 .hero-badge {
@@ -66,8 +79,9 @@ body {
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
-  background: rgba(228, 223, 207, 0.12);
-  border: 1px solid rgba(228, 223, 207, 0.18);
+  background: var(--accent-light);
+  border: 1px solid var(--accent-soft);
+  color: var(--accent-main);
 }
 
 .hero h1 {
@@ -75,6 +89,7 @@ body {
   font-size: 40px;
   line-height: 1.1;
   font-weight: 700;
+  color: var(--accent-main);
 }
 
 .hero-text {
@@ -83,7 +98,7 @@ body {
   font-size: 17px;
   line-height: 1.5;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--muted);
 }
 
 .toolbar {
@@ -98,7 +113,7 @@ body {
 .status-card,
 .metrics-card {
   background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
-  border: 1px solid var(--border);
+  border: 2px solid var(--accent-soft);
   border-radius: 20px;
   padding: 20px;
   box-shadow: var(--shadow);
@@ -109,7 +124,7 @@ body {
   margin: 0 0 16px 0;
   font-size: 22px;
   font-weight: 700;
-  color: var(--accent-cream);
+  color: var(--accent-main);
 }
 
 .field {
@@ -136,16 +151,16 @@ select {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 2px solid var(--accent-soft);
   border-radius: 12px;
   outline: none;
 }
 
 input[type="text"]:focus,
 select:focus {
-  border-color: var(--accent-light);
-  box-shadow: 0 0 0 3px rgba(159, 185, 176, 0.16);
+  border-color: var(--accent-main);
+  box-shadow: 0 0 0 3px rgba(155, 27, 48, 0.12);
 }
 
 .custom-file-upload {
@@ -153,8 +168,8 @@ select:focus {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 2px solid var(--accent-soft);
   border-radius: 12px;
 }
 
@@ -239,7 +254,7 @@ button:hover {
   font-size: 20px;
   font-weight: 700;
   margin-bottom: 14px;
-  color: var(--accent-cream);
+  color: var(--accent-main);
 }
 
 canvas {
@@ -247,7 +262,7 @@ canvas {
   min-height: 300px;
   display: block;
   background: linear-gradient(180deg, var(--canvas-bg) 0%, var(--canvas-bg-2) 100%);
-  border: 2px solid rgba(185, 208, 204, 0.65);
+  border: 2px solid var(--canvas-border);
   border-radius: 14px;
 }
 
@@ -260,7 +275,7 @@ canvas {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: var(--accent-cream);
+  color: var(--success);
 }
 
 .metrics-card {
@@ -274,8 +289,8 @@ canvas {
 }
 
 .metric-box {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff 0%, #f3eded 100%);
+  border: 2px solid #d7c3c7;
   border-radius: 16px;
   padding: 16px;
 }
@@ -291,7 +306,7 @@ canvas {
 .metric-number {
   font-size: 22px;
   font-weight: 700;
-  color: var(--accent-cream);
+  color: var(--accent-main);
   word-break: break-word;
 }
 
