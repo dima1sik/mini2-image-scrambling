@@ -220,6 +220,67 @@ function unscrambleStage2(imageData, seed) {
   return permutePixels(imageData, inversePermutation);
 }
 
+function buildKeystream(length, seed) {
+  const stream = new Uint8Array(length);
+  const random = createPRNG(seed);
+
+  for (let i = 0; i < length; i++) {
+    stream[i] = Math.floor(random() * 256);
+  }
+
+  return stream;
+}
+
+function substitutePixels(imageData, seed) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const data = imageData.data;
+  const result = new Uint8ClampedArray(data.length);
+
+  const stream = buildKeystream(width * height * 3, seed);
+  let streamIndex = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    result[i] = (data[i] + stream[streamIndex++]) % 256;
+    result[i + 1] = (data[i + 1] + stream[streamIndex++]) % 256;
+    result[i + 2] = (data[i + 2] + stream[streamIndex++]) % 256;
+    result[i + 3] = data[i + 3];
+  }
+
+  return new ImageData(result, width, height);
+}
+
+function inverseSubstitutePixels(imageData, seed) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const data = imageData.data;
+  const result = new Uint8ClampedArray(data.length);
+
+  const stream = buildKeystream(width * height * 3, seed);
+  let streamIndex = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    result[i] = (data[i] - stream[streamIndex++] + 256) % 256;
+    result[i + 1] = (data[i + 1] - stream[streamIndex++] + 256) % 256;
+    result[i + 2] = (data[i + 2] - stream[streamIndex++] + 256) % 256;
+    result[i + 3] = data[i + 3];
+  }
+
+  return new ImageData(result, width, height);
+}
+
+function scrambleStage3(imageData, seed) {
+  const permuted = scrambleStage2(imageData, seed);
+  const substituted = substitutePixels(permuted, seed * 3 + 17);
+  return substituted;
+}
+
+function unscrambleStage3(imageData, seed) {
+  const unsubstituted = inverseSubstitutePixels(imageData, seed * 3 + 17);
+  const restored = unscrambleStage2(unsubstituted, seed);
+  return restored;
+}
+
 imageInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
 
@@ -285,9 +346,15 @@ scrambleBtn.addEventListener("click", function () {
     return;
   }
 
-  scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-  scrambledCtx.drawImage(currentImage, 0, 0);
-  setStatus("test Scramble: etap 3 jeszcze nie jest zaimplementowany");
+  if (selectedStage === "3") {
+    const scrambled = scrambleStage3(imageData, seed);
+
+    scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
+    putImageData(scrambledCtx, scrambled);
+
+    setStatus("wykonano Scramble dla etapu 3");
+    return;
+  }
 });
 
 unscrambleBtn.addEventListener("click", function () {
@@ -321,7 +388,14 @@ unscrambleBtn.addEventListener("click", function () {
     return;
   }
 
-  restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
-  restoredCtx.drawImage(currentImage, 0, 0);
-  setStatus("test Unscramble: etap 3 jeszcze nie jest zaimplementowany");
+  if (selectedStage === "3") {
+    const imageData = getImageData(scrambledCtx, scrambledCanvas);
+    const restored = unscrambleStage3(imageData, seed);
+
+    restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
+    putImageData(restoredCtx, restored);
+
+    setStatus("wykonano Unscramble dla etapu 3");
+    return;
+  }
 });
