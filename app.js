@@ -8,16 +8,19 @@ const unscrambleBtn = document.getElementById("unscrambleBtn");
 const wrongUnscrambleBtn = document.getElementById("wrongUnscrambleBtn");
 const saveScrambledBtn = document.getElementById("saveScrambledBtn");
 const saveRestoredBtn = document.getElementById("saveRestoredBtn");
+const saveDifferenceBtn = document.getElementById("saveDifferenceBtn");
 
 const statusText = document.getElementById("statusText");
 
 const originalCanvas = document.getElementById("originalCanvas");
 const scrambledCanvas = document.getElementById("scrambledCanvas");
 const restoredCanvas = document.getElementById("restoredCanvas");
+const differenceCanvas = document.getElementById("differenceCanvas");
 
 const originalCtx = originalCanvas.getContext("2d");
 const scrambledCtx = scrambledCanvas.getContext("2d");
 const restoredCtx = restoredCanvas.getContext("2d");
+const differenceCtx = differenceCanvas.getContext("2d");
 
 const originalCorrValue = document.getElementById("originalCorrValue");
 const scrambledCorrValue = document.getElementById("scrambledCorrValue");
@@ -157,6 +160,23 @@ function areImagesExactlyEqual(imageDataA, imageDataB) {
   return true;
 }
 
+function buildDifferenceImage(imageDataA, imageDataB) {
+  const width = imageDataA.width;
+  const height = imageDataA.height;
+  const dataA = imageDataA.data;
+  const dataB = imageDataB.data;
+  const result = new Uint8ClampedArray(dataA.length);
+
+  for (let i = 0; i < dataA.length; i += 4) {
+    result[i] = Math.abs(dataA[i] - dataB[i]);
+    result[i + 1] = Math.abs(dataA[i + 1] - dataB[i + 1]);
+    result[i + 2] = Math.abs(dataA[i + 2] - dataB[i + 2]);
+    result[i + 3] = 255;
+  }
+
+  return new ImageData(result, width, height);
+}
+
 function updateOriginalMetric() {
   const imageData = getImageData(originalCtx, originalCanvas);
   const corr = calculateHorizontalCorrelation(imageData);
@@ -176,10 +196,14 @@ function updateRestoreMetrics(restoredImageData, modeText) {
   restoreModeValue.textContent = modeText;
   restoredMseValue.textContent = mse === null ? "-" : formatNumber(mse);
   exactRestoreValue.textContent = exact ? "TAK" : "NIE";
+
+  const differenceImage = buildDifferenceImage(originalImageData, restoredImageData);
+  clearCanvas(differenceCtx, differenceCanvas);
+  putImageData(differenceCtx, differenceImage);
 }
 
 /* =========================
-   ETAP 1 - NAIWNY SCRAMBLING
+   ETAP 1
    ========================= */
 
 function createRowShifts(seed, width, height) {
@@ -284,7 +308,7 @@ function unscrambleStage1(imageData, seed) {
 }
 
 /* =========================
-   ETAP 2 - CZYSTA PERMUTACJA
+   ETAP 2
    ========================= */
 
 function createPRNG(seed) {
@@ -367,7 +391,7 @@ function unscrambleStage2(imageData, seed) {
 }
 
 /* =========================
-   ETAP 3 - WERSJA WZMOCNIONA
+   ETAP 3
    ========================= */
 
 function buildKeystream(length, seed) {
@@ -502,10 +526,12 @@ imageInput.addEventListener("change", function (event) {
       fitCanvasToImage(originalCanvas, img);
       fitCanvasToImage(scrambledCanvas, img);
       fitCanvasToImage(restoredCanvas, img);
+      fitCanvasToImage(differenceCanvas, img);
 
       clearCanvas(originalCtx, originalCanvas);
       clearCanvas(scrambledCtx, scrambledCanvas);
       clearCanvas(restoredCtx, restoredCanvas);
+      clearCanvas(differenceCtx, differenceCanvas);
 
       originalCtx.drawImage(img, 0, 0);
 
@@ -537,6 +563,8 @@ scrambleBtn.addEventListener("click", function () {
   putImageData(scrambledCtx, scrambled);
 
   clearCanvas(restoredCtx, restoredCanvas);
+  clearCanvas(differenceCtx, differenceCanvas);
+
   restoreModeValue.textContent = "-";
   restoredMseValue.textContent = "-";
   exactRestoreValue.textContent = "-";
@@ -596,4 +624,10 @@ saveRestoredBtn.addEventListener("click", function () {
   const stage = stageSelect.value;
   downloadCanvas(restoredCanvas, "restored_stage_" + stage + ".png");
   setStatus("zapisano obraz restored");
+});
+
+saveDifferenceBtn.addEventListener("click", function () {
+  const stage = stageSelect.value;
+  downloadCanvas(differenceCanvas, "difference_stage_" + stage + ".png");
+  setStatus("zapisano obraz difference");
 });
