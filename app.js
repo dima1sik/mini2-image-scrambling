@@ -1,8 +1,14 @@
 const imageInput = document.getElementById("imageInput");
 const stageSelect = document.getElementById("stageSelect");
 const seedInput = document.getElementById("seedInput");
+const wrongSeedInput = document.getElementById("wrongSeedInput");
+
 const scrambleBtn = document.getElementById("scrambleBtn");
 const unscrambleBtn = document.getElementById("unscrambleBtn");
+const wrongUnscrambleBtn = document.getElementById("wrongUnscrambleBtn");
+const saveScrambledBtn = document.getElementById("saveScrambledBtn");
+const saveRestoredBtn = document.getElementById("saveRestoredBtn");
+
 const statusText = document.getElementById("statusText");
 
 const originalCanvas = document.getElementById("originalCanvas");
@@ -32,6 +38,10 @@ function putImageData(ctx, imageData) {
   ctx.putImageData(imageData, 0, 0);
 }
 
+function clearCanvas(ctx, canvas) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 function normalizeShift(shift, size) {
   let result = shift % size;
   if (result < 0) {
@@ -40,12 +50,16 @@ function normalizeShift(shift, size) {
   return result;
 }
 
+/* =========================
+   ETAP 1 - NAIWNY SCRAMBLING
+   ========================= */
+
 function createRowShifts(seed, width, height) {
   const shifts = [];
 
   for (let y = 0; y < height; y++) {
-    const shift = normalizeShift(seed + y * 7, width);
-    shifts.push(shift);
+    const rawShift = seed * (y + 3) + y * y * 17 + 31;
+    shifts.push(normalizeShift(rawShift, width));
   }
 
   return shifts;
@@ -55,8 +69,8 @@ function createColumnShifts(seed, width, height) {
   const shifts = [];
 
   for (let x = 0; x < width; x++) {
-    const shift = normalizeShift(seed + x * 11, height);
-    shifts.push(shift);
+    const rawShift = seed * (x + 5) + x * x * 19 + 47;
+    shifts.push(normalizeShift(rawShift, height));
   }
 
   return shifts;
@@ -141,6 +155,10 @@ function unscrambleStage1(imageData, seed) {
   return fullyRestored;
 }
 
+/* =========================
+   ETAP 2 - CZYSTA PERMUTACJA
+   ========================= */
+
 function createPRNG(seed) {
   let state = seed >>> 0;
 
@@ -220,6 +238,10 @@ function unscrambleStage2(imageData, seed) {
   return permutePixels(imageData, inversePermutation);
 }
 
+/* =========================
+   ETAP 3 - WERSJA WZMOCNIONA
+   ========================= */
+
 function buildKeystream(length, seed) {
   const stream = new Uint8Array(length);
   const random = createPRNG(seed);
@@ -281,6 +303,58 @@ function unscrambleStage3(imageData, seed) {
   return restored;
 }
 
+/* =========================
+   WSPÓLNE
+   ========================= */
+
+function scrambleByStage(imageData, stage, seed) {
+  if (stage === "1") {
+    return scrambleStage1(imageData, seed);
+  }
+
+  if (stage === "2") {
+    return scrambleStage2(imageData, seed);
+  }
+
+  if (stage === "3") {
+    return scrambleStage3(imageData, seed);
+  }
+
+  return imageData;
+}
+
+function unscrambleByStage(imageData, stage, seed) {
+  if (stage === "1") {
+    return unscrambleStage1(imageData, seed);
+  }
+
+  if (stage === "2") {
+    return unscrambleStage2(imageData, seed);
+  }
+
+  if (stage === "3") {
+    return unscrambleStage3(imageData, seed);
+  }
+
+  return imageData;
+}
+
+function downloadCanvas(canvas, filename) {
+  if (canvas.width === 0 || canvas.height === 0) {
+    setStatus("brak obrazu do zapisania");
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL("image/png");
+  link.download = filename;
+  link.click();
+}
+
+/* =========================
+   ZDARZENIA
+   ========================= */
+
 imageInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
 
@@ -301,9 +375,9 @@ imageInput.addEventListener("change", function (event) {
       fitCanvasToImage(scrambledCanvas, img);
       fitCanvasToImage(restoredCanvas, img);
 
-      originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
-      scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-      restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
+      clearCanvas(originalCtx, originalCanvas);
+      clearCanvas(scrambledCtx, scrambledCanvas);
+      clearCanvas(restoredCtx, restoredCanvas);
 
       originalCtx.drawImage(img, 0, 0);
 
@@ -322,39 +396,18 @@ scrambleBtn.addEventListener("click", function () {
     return;
   }
 
-  const selectedStage = stageSelect.value;
+  const stage = stageSelect.value;
   const seed = parseInt(seedInput.value, 10) || 10;
   const imageData = getImageData(originalCtx, originalCanvas);
 
-  if (selectedStage === "1") {
-    const scrambled = scrambleStage1(imageData, seed);
+  const scrambled = scrambleByStage(imageData, stage, seed);
 
-    scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-    putImageData(scrambledCtx, scrambled);
+  clearCanvas(scrambledCtx, scrambledCanvas);
+  putImageData(scrambledCtx, scrambled);
 
-    setStatus("wykonano Scramble dla etapu 1");
-    return;
-  }
+  clearCanvas(restoredCtx, restoredCanvas);
 
-  if (selectedStage === "2") {
-    const scrambled = scrambleStage2(imageData, seed);
-
-    scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-    putImageData(scrambledCtx, scrambled);
-
-    setStatus("wykonano Scramble dla etapu 2");
-    return;
-  }
-
-  if (selectedStage === "3") {
-    const scrambled = scrambleStage3(imageData, seed);
-
-    scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-    putImageData(scrambledCtx, scrambled);
-
-    setStatus("wykonano Scramble dla etapu 3");
-    return;
-  }
+  setStatus("wykonano Scramble dla etapu " + stage);
 });
 
 unscrambleBtn.addEventListener("click", function () {
@@ -363,39 +416,44 @@ unscrambleBtn.addEventListener("click", function () {
     return;
   }
 
-  const selectedStage = stageSelect.value;
+  const stage = stageSelect.value;
   const seed = parseInt(seedInput.value, 10) || 10;
+  const imageData = getImageData(scrambledCtx, scrambledCanvas);
 
-  if (selectedStage === "1") {
-    const imageData = getImageData(scrambledCtx, scrambledCanvas);
-    const restored = unscrambleStage1(imageData, seed);
+  const restored = unscrambleByStage(imageData, stage, seed);
 
-    restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
-    putImageData(restoredCtx, restored);
+  clearCanvas(restoredCtx, restoredCanvas);
+  putImageData(restoredCtx, restored);
 
-    setStatus("wykonano Unscramble dla etapu 1");
+  setStatus("wykonano Unscramble dla etapu " + stage + " przy poprawnym kluczu");
+});
+
+wrongUnscrambleBtn.addEventListener("click", function () {
+  if (!currentImage) {
+    setStatus("najpierw wczytaj obraz");
     return;
   }
 
-  if (selectedStage === "2") {
-    const imageData = getImageData(scrambledCtx, scrambledCanvas);
-    const restored = unscrambleStage2(imageData, seed);
+  const stage = stageSelect.value;
+  const wrongSeed = parseInt(wrongSeedInput.value, 10) || 11;
+  const imageData = getImageData(scrambledCtx, scrambledCanvas);
 
-    restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
-    putImageData(restoredCtx, restored);
+  const restored = unscrambleByStage(imageData, stage, wrongSeed);
 
-    setStatus("wykonano Unscramble dla etapu 2");
-    return;
-  }
+  clearCanvas(restoredCtx, restoredCanvas);
+  putImageData(restoredCtx, restored);
 
-  if (selectedStage === "3") {
-    const imageData = getImageData(scrambledCtx, scrambledCanvas);
-    const restored = unscrambleStage3(imageData, seed);
+  setStatus("wykonano Unscramble dla etapu " + stage + " przy błędnym kluczu");
+});
 
-    restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
-    putImageData(restoredCtx, restored);
+saveScrambledBtn.addEventListener("click", function () {
+  const stage = stageSelect.value;
+  downloadCanvas(scrambledCanvas, "scrambled_stage_" + stage + ".png");
+  setStatus("zapisano obraz scrambled");
+});
 
-    setStatus("wykonano Unscramble dla etapu 3");
-    return;
-  }
+saveRestoredBtn.addEventListener("click", function () {
+  const stage = stageSelect.value;
+  downloadCanvas(restoredCanvas, "restored_stage_" + stage + ".png");
+  setStatus("zapisano obraz restored");
 });

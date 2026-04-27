@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini 2 - Image Scrambling</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
@@ -13,7 +13,7 @@
     <div class="controls">
       <div class="control-block">
         <label for="imageInput">Wczytaj obraz:</label>
-        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp">
+        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp" />
       </div>
 
       <div class="control-block">
@@ -26,13 +26,21 @@
       </div>
 
       <div class="control-block">
-        <label for="seedInput">Klucz / seed:</label>
-        <input type="text" id="seedInput" value="12345">
+        <label for="seedInput">Poprawny klucz / seed:</label>
+        <input type="text" id="seedInput" value="12345" />
+      </div>
+
+      <div class="control-block">
+        <label for="wrongSeedInput">Błędny klucz / seed:</label>
+        <input type="text" id="wrongSeedInput" value="12346" />
       </div>
 
       <div class="control-block buttons-block">
         <button id="scrambleBtn">Scramble</button>
         <button id="unscrambleBtn">Unscramble</button>
+        <button id="wrongUnscrambleBtn">Unscramble (błędny klucz)</button>
+        <button id="saveScrambledBtn">Zapisz scrambled</button>
+        <button id="saveRestoredBtn">Zapisz restored</button>
       </div>
     </div>
 

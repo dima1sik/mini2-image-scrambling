@@ -5,12 +5,12 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f4f4;
-  color: #222;
+  background: #0f141a;
+  color: #ffffff;
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1450px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -23,35 +23,58 @@ h1 {
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
-  background: white;
-  border-radius: 10px;
+  gap: 20px;
+  padding: 18px;
+  background: #0b1015;
+  border-radius: 14px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .control-block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 220px;
 }
 
-.buttons-block {
-  justify-content: end;
+.control-block label {
+  font-size: 15px;
+  font-weight: bold;
 }
 
 input[type="text"],
 select,
 button,
 input[type="file"] {
-  padding: 8px;
+  padding: 10px 12px;
   font-size: 14px;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+input[type="text"],
+select,
+input[type="file"] {
+  background: #2f2f2f;
+  color: #ffffff;
 }
 
 button {
   cursor: pointer;
+  background: #6b6b6b;
+  color: #ffffff;
+  border: none;
+}
+
+button:hover {
+  background: #818181;
+}
+
+.buttons-block {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  min-width: 260px;
 }
 
 .images {
@@ -61,29 +84,35 @@ button {
 }
 
 .panel {
-  background: white;
-  padding: 12px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #0b1015;
+  padding: 14px;
+  border-radius: 14px;
 }
 
 .panel h2 {
   margin-top: 0;
+  margin-bottom: 14px;
   font-size: 18px;
 }
 
 canvas {
   width: 100%;
   min-height: 300px;
-  border: 1px solid #ccc;
-  background: #fafafa;
+  border: 1px solid #3a3a3a;
+  background: #10151b;
   display: block;
 }
 
 .status {
   margin-top: 20px;
-  padding: 14px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 18px;
+  background: #0b1015;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+@media (max-width: 1100px) {
+  .images {
+    grid-template-columns: 1fr;
+  }
 }
