@@ -19,6 +19,12 @@ const originalCtx = originalCanvas.getContext("2d");
 const scrambledCtx = scrambledCanvas.getContext("2d");
 const restoredCtx = restoredCanvas.getContext("2d");
 
+const originalCorrValue = document.getElementById("originalCorrValue");
+const scrambledCorrValue = document.getElementById("scrambledCorrValue");
+const restoreModeValue = document.getElementById("restoreModeValue");
+const restoredMseValue = document.getElementById("restoredMseValue");
+const exactRestoreValue = document.getElementById("exactRestoreValue");
+
 let currentImage = null;
 
 function setStatus(message) {
@@ -48,6 +54,128 @@ function normalizeShift(shift, size) {
     result += size;
   }
   return result;
+}
+
+function formatNumber(value) {
+  return value.toFixed(6);
+}
+
+function resetMetrics() {
+  originalCorrValue.textContent = "-";
+  scrambledCorrValue.textContent = "-";
+  restoreModeValue.textContent = "-";
+  restoredMseValue.textContent = "-";
+  exactRestoreValue.textContent = "-";
+}
+
+function getGrayValue(data, offset) {
+  return (data[offset] + data[offset + 1] + data[offset + 2]) / 3;
+}
+
+function calculateHorizontalCorrelation(imageData) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const data = imageData.data;
+
+  if (width < 2 || height < 1) {
+    return 0;
+  }
+
+  let n = 0;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXX = 0;
+  let sumYY = 0;
+  let sumXY = 0;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width - 1; x++) {
+      const offsetA = (y * width + x) * 4;
+      const offsetB = (y * width + x + 1) * 4;
+
+      const a = getGrayValue(data, offsetA);
+      const b = getGrayValue(data, offsetB);
+
+      n++;
+      sumX += a;
+      sumY += b;
+      sumXX += a * a;
+      sumYY += b * b;
+      sumXY += a * b;
+    }
+  }
+
+  const numerator = n * sumXY - sumX * sumY;
+  const denominatorPartA = n * sumXX - sumX * sumX;
+  const denominatorPartB = n * sumYY - sumY * sumY;
+  const denominator = Math.sqrt(denominatorPartA * denominatorPartB);
+
+  if (denominator === 0) {
+    return 0;
+  }
+
+  return numerator / denominator;
+}
+
+function calculateMSE(imageDataA, imageDataB) {
+  const dataA = imageDataA.data;
+  const dataB = imageDataB.data;
+
+  if (dataA.length !== dataB.length) {
+    return null;
+  }
+
+  let sum = 0;
+  let count = 0;
+
+  for (let i = 0; i < dataA.length; i += 4) {
+    const dr = dataA[i] - dataB[i];
+    const dg = dataA[i + 1] - dataB[i + 1];
+    const db = dataA[i + 2] - dataB[i + 2];
+
+    sum += dr * dr + dg * dg + db * db;
+    count += 3;
+  }
+
+  return sum / count;
+}
+
+function areImagesExactlyEqual(imageDataA, imageDataB) {
+  const dataA = imageDataA.data;
+  const dataB = imageDataB.data;
+
+  if (dataA.length !== dataB.length) {
+    return false;
+  }
+
+  for (let i = 0; i < dataA.length; i++) {
+    if (dataA[i] !== dataB[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function updateOriginalMetric() {
+  const imageData = getImageData(originalCtx, originalCanvas);
+  const corr = calculateHorizontalCorrelation(imageData);
+  originalCorrValue.textContent = formatNumber(corr);
+}
+
+function updateScrambledMetric(imageData) {
+  const corr = calculateHorizontalCorrelation(imageData);
+  scrambledCorrValue.textContent = formatNumber(corr);
+}
+
+function updateRestoreMetrics(restoredImageData, modeText) {
+  const originalImageData = getImageData(originalCtx, originalCanvas);
+  const mse = calculateMSE(originalImageData, restoredImageData);
+  const exact = areImagesExactlyEqual(originalImageData, restoredImageData);
+
+  restoreModeValue.textContent = modeText;
+  restoredMseValue.textContent = mse === null ? "-" : formatNumber(mse);
+  exactRestoreValue.textContent = exact ? "TAK" : "NIE";
 }
 
 /* =========================
@@ -381,6 +509,9 @@ imageInput.addEventListener("change", function (event) {
 
       originalCtx.drawImage(img, 0, 0);
 
+      resetMetrics();
+      updateOriginalMetric();
+
       setStatus("obraz został wczytany");
     };
 
@@ -406,6 +537,11 @@ scrambleBtn.addEventListener("click", function () {
   putImageData(scrambledCtx, scrambled);
 
   clearCanvas(restoredCtx, restoredCanvas);
+  restoreModeValue.textContent = "-";
+  restoredMseValue.textContent = "-";
+  exactRestoreValue.textContent = "-";
+
+  updateScrambledMetric(scrambled);
 
   setStatus("wykonano Scramble dla etapu " + stage);
 });
@@ -425,6 +561,8 @@ unscrambleBtn.addEventListener("click", function () {
   clearCanvas(restoredCtx, restoredCanvas);
   putImageData(restoredCtx, restored);
 
+  updateRestoreMetrics(restored, "poprawny klucz");
+
   setStatus("wykonano Unscramble dla etapu " + stage + " przy poprawnym kluczu");
 });
 
@@ -442,6 +580,8 @@ wrongUnscrambleBtn.addEventListener("click", function () {
 
   clearCanvas(restoredCtx, restoredCanvas);
   putImageData(restoredCtx, restored);
+
+  updateRestoreMetrics(restored, "błędny klucz");
 
   setStatus("wykonano Unscramble dla etapu " + stage + " przy błędnym kluczu");
 });

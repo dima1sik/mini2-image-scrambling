@@ -64,6 +64,37 @@
     <div class="status">
       <p id="statusText">Status: oczekiwanie na wczytanie obrazu</p>
     </div>
+
+    <div class="metrics">
+      <h2>Metryki</h2>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Korelacja pozioma (oryginał)</div>
+          <div class="metric-value" id="originalCorrValue">-</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Korelacja pozioma (scrambled)</div>
+          <div class="metric-value" id="scrambledCorrValue">-</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Tryb ostatniego odtworzenia</div>
+          <div class="metric-value" id="restoreModeValue">-</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">MSE restored vs original</div>
+          <div class="metric-value" id="restoredMseValue">-</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Czy restored = original</div>
+          <div class="metric-value" id="exactRestoreValue">-</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
