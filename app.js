@@ -32,10 +32,10 @@ function putImageData(ctx, imageData) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-function normalizeShift(shift, width) {
-  let result = shift % width;
+function normalizeShift(shift, size) {
+  let result = shift % size;
   if (result < 0) {
-    result += width;
+    result += size;
   }
   return result;
 }
@@ -65,6 +65,59 @@ function shiftRows(imageData, shift) {
   return new ImageData(result, width, height);
 }
 
+function shiftColumns(imageData, shift) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const data = imageData.data;
+  const result = new Uint8ClampedArray(data.length);
+
+  const normalizedShift = normalizeShift(shift, height);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const newY = (y + normalizedShift) % height;
+
+      const oldIndex = (y * width + x) * 4;
+      const newIndex = (newY * width + x) * 4;
+
+      result[newIndex] = data[oldIndex];
+      result[newIndex + 1] = data[oldIndex + 1];
+      result[newIndex + 2] = data[oldIndex + 2];
+      result[newIndex + 3] = data[oldIndex + 3];
+    }
+  }
+
+  return new ImageData(result, width, height);
+}
+
+function getStage1Shifts(seed, width, height) {
+  const rowShift = normalizeShift(seed, width);
+  const colShift = normalizeShift(Math.floor(seed / 2) + 7, height);
+
+  return {
+    rowShift: rowShift,
+    colShift: colShift
+  };
+}
+
+function scrambleStage1(imageData, seed) {
+  const shifts = getStage1Shifts(seed, imageData.width, imageData.height);
+
+  const rowsShifted = shiftRows(imageData, shifts.rowShift);
+  const fullyShifted = shiftColumns(rowsShifted, shifts.colShift);
+
+  return fullyShifted;
+}
+
+function unscrambleStage1(imageData, seed) {
+  const shifts = getStage1Shifts(seed, imageData.width, imageData.height);
+
+  const columnsRestored = shiftColumns(imageData, -shifts.colShift);
+  const fullyRestored = shiftRows(columnsRestored, -shifts.rowShift);
+
+  return fullyRestored;
+}
+
 imageInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
 
@@ -90,8 +143,6 @@ imageInput.addEventListener("change", function (event) {
       restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
 
       originalCtx.drawImage(img, 0, 0);
-      scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-      restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
 
       setStatus("obraz został wczytany");
     };
@@ -110,13 +161,14 @@ scrambleBtn.addEventListener("click", function () {
 
   const selectedStage = stageSelect.value;
   const seed = parseInt(seedInput.value, 10) || 10;
-
   const imageData = getImageData(originalCtx, originalCanvas);
 
   if (selectedStage === "1") {
-    const shifted = shiftRows(imageData, seed);
+    const scrambled = scrambleStage1(imageData, seed);
+
     scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
-    putImageData(scrambledCtx, shifted);
+    putImageData(scrambledCtx, scrambled);
+
     setStatus("wykonano Scramble dla etapu 1");
     return;
   }
@@ -137,10 +189,11 @@ unscrambleBtn.addEventListener("click", function () {
 
   if (selectedStage === "1") {
     const imageData = getImageData(scrambledCtx, scrambledCanvas);
-    const restored = shiftRows(imageData, -seed);
+    const restored = unscrambleStage1(imageData, seed);
 
     restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
     putImageData(restoredCtx, restored);
+
     setStatus("wykonano Unscramble dla etapu 1");
     return;
   }
