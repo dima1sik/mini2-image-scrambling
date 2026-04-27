@@ -8,99 +8,120 @@
 </head>
 <body>
   <div class="container">
-    <h1>Mini 2 - Image Scrambling</h1>
+    <header class="hero">
+      <div class="hero-left">
+        <div class="hero-badge">Mini Projekt 2</div>
+        <h1>Image Scrambling Analyzer</h1>
+        <p class="hero-text">
+          Analiza etapów scramblingu, permutacji i wersji wzmocnionej dla obrazu cyfrowego.
+        </p>
+      </div>
+    </header>
 
-    <div class="controls">
-      <div class="control-block">
-        <label for="imageInput">Wczytaj obraz:</label>
-        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp" />
+    <section class="toolbar">
+      <div class="toolbar-card">
+        <h2>Obraz i etap</h2>
+
+        <div class="field">
+          <label for="imageInput">Wczytaj obraz</label>
+          <input type="file" id="imageInput" accept="image/png, image/jpeg, image/bmp" />
+        </div>
+
+        <div class="field">
+          <label for="stageSelect">Wybierz etap</label>
+          <select id="stageSelect">
+            <option value="1">Etap 1 - Naiwny scrambling</option>
+            <option value="2">Etap 2 - Czysta permutacja</option>
+            <option value="3">Etap 3 - Wersja wzmocniona</option>
+          </select>
+        </div>
       </div>
 
-      <div class="control-block">
-        <label for="stageSelect">Etap:</label>
-        <select id="stageSelect">
-          <option value="1">Etap 1 - Naiwny scrambling</option>
-          <option value="2">Etap 2 - Czysta permutacja</option>
-          <option value="3">Etap 3 - Wersja wzmocniona</option>
-        </select>
+      <div class="toolbar-card">
+        <h2>Klucze</h2>
+
+        <div class="field">
+          <label for="seedInput">Poprawny klucz / seed</label>
+          <input type="text" id="seedInput" value="12345" />
+        </div>
+
+        <div class="field">
+          <label for="wrongSeedInput">Błędny klucz / seed</label>
+          <input type="text" id="wrongSeedInput" value="12346" />
+        </div>
       </div>
 
-      <div class="control-block">
-        <label for="seedInput">Poprawny klucz / seed:</label>
-        <input type="text" id="seedInput" value="12345" />
-      </div>
+      <div class="toolbar-card toolbar-card-wide">
+        <h2>Operacje</h2>
 
-      <div class="control-block">
-        <label for="wrongSeedInput">Błędny klucz / seed:</label>
-        <input type="text" id="wrongSeedInput" value="12346" />
+        <div class="actions">
+          <button id="scrambleBtn">Scramble</button>
+          <button id="unscrambleBtn">Unscramble</button>
+          <button id="wrongUnscrambleBtn">Unscramble (błędny klucz)</button>
+          <button id="saveScrambledBtn">Zapisz scrambled</button>
+          <button id="saveRestoredBtn">Zapisz restored</button>
+          <button id="saveDifferenceBtn">Zapisz difference</button>
+        </div>
       </div>
+    </section>
 
-      <div class="control-block buttons-block">
-        <button id="scrambleBtn">Scramble</button>
-        <button id="unscrambleBtn">Unscramble</button>
-        <button id="wrongUnscrambleBtn">Unscramble (błędny klucz)</button>
-        <button id="saveScrambledBtn">Zapisz scrambled</button>
-        <button id="saveRestoredBtn">Zapisz restored</button>
-        <button id="saveDifferenceBtn">Zapisz difference</button>
-      </div>
-    </div>
-
-    <div class="images images-four">
-      <div class="panel">
-        <h2>Obraz oryginalny</h2>
+    <section class="canvas-grid">
+      <article class="canvas-card">
+        <div class="card-title">Obraz oryginalny</div>
         <canvas id="originalCanvas"></canvas>
-      </div>
+      </article>
 
-      <div class="panel">
-        <h2>Obraz scrambled</h2>
+      <article class="canvas-card">
+        <div class="card-title">Obraz scrambled</div>
         <canvas id="scrambledCanvas"></canvas>
-      </div>
+      </article>
 
-      <div class="panel">
-        <h2>Obraz restored</h2>
+      <article class="canvas-card">
+        <div class="card-title">Obraz restored</div>
         <canvas id="restoredCanvas"></canvas>
-      </div>
+      </article>
 
-      <div class="panel">
-        <h2>Difference</h2>
+      <article class="canvas-card">
+        <div class="card-title">Difference</div>
         <canvas id="differenceCanvas"></canvas>
-      </div>
-    </div>
+      </article>
+    </section>
 
-    <div class="status">
+    <section class="status-card">
+      <div class="section-title">Status</div>
       <p id="statusText">Status: oczekiwanie na wczytanie obrazu</p>
-    </div>
+    </section>
 
-    <div class="metrics">
-      <h2>Metryki</h2>
+    <section class="metrics-card">
+      <div class="section-title">Metryki</div>
 
       <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Korelacja pozioma (oryginał)</div>
-          <div class="metric-value" id="originalCorrValue">-</div>
+        <div class="metric-box">
+          <div class="metric-name">Korelacja pozioma (oryginał)</div>
+          <div class="metric-number" id="originalCorrValue">-</div>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Korelacja pozioma (scrambled)</div>
-          <div class="metric-value" id="scrambledCorrValue">-</div>
+        <div class="metric-box">
+          <div class="metric-name">Korelacja pozioma (scrambled)</div>
+          <div class="metric-number" id="scrambledCorrValue">-</div>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Tryb ostatniego odtworzenia</div>
-          <div class="metric-value" id="restoreModeValue">-</div>
+        <div class="metric-box">
+          <div class="metric-name">Tryb ostatniego odtworzenia</div>
+          <div class="metric-number" id="restoreModeValue">-</div>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-label">MSE restored vs original</div>
-          <div class="metric-value" id="restoredMseValue">-</div>
+        <div class="metric-box">
+          <div class="metric-name">MSE restored vs original</div>
+          <div class="metric-number" id="restoredMseValue">-</div>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Czy restored = original</div>
-          <div class="metric-value" id="exactRestoreValue">-</div>
+        <div class="metric-box">
+          <div class="metric-name">Czy restored = original</div>
+          <div class="metric-number" id="exactRestoreValue">-</div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 
   <script src="app.js"></script>
