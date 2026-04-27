@@ -141,6 +141,85 @@ function unscrambleStage1(imageData, seed) {
   return fullyRestored;
 }
 
+function createPRNG(seed) {
+  let state = seed >>> 0;
+
+  if (state === 0) {
+    state = 123456789;
+  }
+
+  return function () {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function buildPermutation(length, seed) {
+  const permutation = new Uint32Array(length);
+
+  for (let i = 0; i < length; i++) {
+    permutation[i] = i;
+  }
+
+  const random = createPRNG(seed);
+
+  for (let i = length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+
+    const temp = permutation[i];
+    permutation[i] = permutation[j];
+    permutation[j] = temp;
+  }
+
+  return permutation;
+}
+
+function invertPermutation(permutation) {
+  const inverse = new Uint32Array(permutation.length);
+
+  for (let i = 0; i < permutation.length; i++) {
+    inverse[permutation[i]] = i;
+  }
+
+  return inverse;
+}
+
+function permutePixels(imageData, permutation) {
+  const width = imageData.width;
+  const height = imageData.height;
+  const data = imageData.data;
+  const result = new Uint8ClampedArray(data.length);
+
+  const pixelCount = width * height;
+
+  for (let oldPixelIndex = 0; oldPixelIndex < pixelCount; oldPixelIndex++) {
+    const newPixelIndex = permutation[oldPixelIndex];
+
+    const oldOffset = oldPixelIndex * 4;
+    const newOffset = newPixelIndex * 4;
+
+    result[newOffset] = data[oldOffset];
+    result[newOffset + 1] = data[oldOffset + 1];
+    result[newOffset + 2] = data[oldOffset + 2];
+    result[newOffset + 3] = data[oldOffset + 3];
+  }
+
+  return new ImageData(result, width, height);
+}
+
+function scrambleStage2(imageData, seed) {
+  const pixelCount = imageData.width * imageData.height;
+  const permutation = buildPermutation(pixelCount, seed);
+  return permutePixels(imageData, permutation);
+}
+
+function unscrambleStage2(imageData, seed) {
+  const pixelCount = imageData.width * imageData.height;
+  const permutation = buildPermutation(pixelCount, seed);
+  const inversePermutation = invertPermutation(permutation);
+  return permutePixels(imageData, inversePermutation);
+}
+
 imageInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
 
@@ -196,9 +275,19 @@ scrambleBtn.addEventListener("click", function () {
     return;
   }
 
+  if (selectedStage === "2") {
+    const scrambled = scrambleStage2(imageData, seed);
+
+    scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
+    putImageData(scrambledCtx, scrambled);
+
+    setStatus("wykonano Scramble dla etapu 2");
+    return;
+  }
+
   scrambledCtx.clearRect(0, 0, scrambledCanvas.width, scrambledCanvas.height);
   scrambledCtx.drawImage(currentImage, 0, 0);
-  setStatus("test Scramble: etapy 2 i 3 jeszcze nie są zaimplementowane");
+  setStatus("test Scramble: etap 3 jeszcze nie jest zaimplementowany");
 });
 
 unscrambleBtn.addEventListener("click", function () {
@@ -221,7 +310,18 @@ unscrambleBtn.addEventListener("click", function () {
     return;
   }
 
+  if (selectedStage === "2") {
+    const imageData = getImageData(scrambledCtx, scrambledCanvas);
+    const restored = unscrambleStage2(imageData, seed);
+
+    restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
+    putImageData(restoredCtx, restored);
+
+    setStatus("wykonano Unscramble dla etapu 2");
+    return;
+  }
+
   restoredCtx.clearRect(0, 0, restoredCanvas.width, restoredCanvas.height);
   restoredCtx.drawImage(currentImage, 0, 0);
-  setStatus("test Unscramble: etapy 2 i 3 jeszcze nie są zaimplementowane");
+  setStatus("test Unscramble: etap 3 jeszcze nie jest zaimplementowany");
 });
