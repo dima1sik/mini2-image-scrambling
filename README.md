@@ -1,53 +1,23 @@
 ﻿# Pixel Scrambler Lab
 
-Educational project about digital image transformation.
+Pixel Scrambler Lab is a browser-based image scrambling and unscrambling experiment.
 
-## Project Goal
+## Overview
 
-The goal of this project is to build an application that demonstrates several stages of image scrambling and unscrambling.  
-This project is not intended to be a secure encryption system, but an educational experiment.
+The project demonstrates how digital images can be transformed using several scrambling stages and restored using the correct key.  
+It is an educational project and is not intended to be a secure encryption system.
 
-## Implemented Stages
+## Features
 
-### Stage 1 - Naive scrambling
-- przesuniecia wierszy i kolumn,
-- full reversibility with the correct key,
-- clear security limitations.
+- Load PNG, JPEG, or BMP images
+- Apply multiple image scrambling stages
+- Restore images with the correct key
+- Test restoration with a wrong key
+- Display original, scrambled, restored, and difference images
+- Calculate horizontal pixel correlation
+- Save generated results as PNG files
 
-### Stage 2 - Pure permutation
-- permutacja pikseli sterowana seedem,
-- osobna permutacja odwrotna,
-- correct image restoration with the proper key.
-
-### Stage 3 - Enhanced version
-- permutacja pikseli,
-- dodatkowa odwracalna substytucja wartosci RGB,
-- correct image restoration with the proper key.
-
-## Application Features
-
-- loading PNG / JPEG / BMP images,
-- stage selection: 1 / 2 / 3,
-- using correct and wrong keys,
-- przyciski Scramble i Unscramble,
-- separate unscrambling test with a wrong key,
-- wyswietlanie:
-  - original image,
-  - scrambled image,
-  - restored image,
-  - difference image,
-- saving results to PNG files,
-- basic analytical metrics.
-
-## Metrics
-
-The application calculates:
-- korelacje pozioma pikseli dla original image,
-- horizontal pixel correlation for the scrambled image,
-- MSE dla porownania restored vs original,
-- informacje, czy restored jest dokladnie rowny original.
-
-## Technologie
+## Tech Stack
 
 - HTML
 - CSS
@@ -56,20 +26,11 @@ The application calculates:
 
 ## How to Run
 
-1. Open the project folder in Visual Studio Code.
-2. Run index.html using Live Server.
-3. Load an image.
-4. Select a stage and a key.
-5. Use the Scramble, Unscramble, or Unscramble (wrong key) buttons.
+1. Open the project folder.
+2. Run index.html in a browser.
+3. For best results, use Live Server in Visual Studio Code.
+4. Load an image and test scrambling / unscrambling.
 
-## Uwagi
+## Status
 
-This is an educational project.  
-The goal was to demonstrate the difference between simple scrambling, pure permutation, and an enhanced version, as well as to analyze the limitations of this approach.
-
-
-
-
-
-
-
+Finished educational web project prepared for GitHub portfolio.
